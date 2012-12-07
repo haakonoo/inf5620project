@@ -32,6 +32,7 @@ class ProblemBase:
         self.p    = None
         self.U    = 1.0
         self.output_location = ''
+        self.u_exact = None
 
         # FIXME: Temporary while testing
         self.bcpsi = []
@@ -51,14 +52,6 @@ class ProblemBase:
         "Problem-speficic update at time t"
         pass
 
-    def functional(self, t, u, p):
-        "Return value of functional of interest"
-        return 0.0
-
-    def reference(self, t):
-        "Return reference value for functional"
-        return None
-
     def tolerance(self, problem):
         "Return tolerance (used as local convergence criterion)."
         if str(problem) == 'Channel':
@@ -68,55 +61,15 @@ class ProblemBase:
         else:
             return 1e-6
 
-    # FIXME: Move to solverbase.py and rename select_timestep
-
     def timestep(self, problem):
         "Return time step and number of time steps for problem."
 
-        # FIXME: This looks very complex, should be cleaned up
-
         T = float(problem.T)
-        U = float(problem.U)
-        nu =problem.nu
-        h  = self.mesh.hmin()
-        "Return time step and number of time steps for problem. Used for debugging / compilation only"
-        if self.options["max_steps"] is not None:
-            dt =  0.25*h**2 / (U*(nu + h*U))
-            n  = self.options["max_steps"]
-            T  = n*dt
-            t_range = linspace(0, T, n + 1)[1:]
-        else:
-
-            if self.options["dt_division"] != 0 and problem.dt is not None:
-                dt =  (problem.dt)/int(sqrt(2)**self.options["dt_division"])
-                n  = int(T / dt + 1.0)
-                dt = T / n
-                print 'Using problem.dt and time step refinements'
-
-            # Use time step specified in problem if available
-            elif not problem.dt is None:
-                dt = problem.dt
-                print dt
-                n  = int(T / dt)
-                print 'Using problem.dt'
-
-            # Otherwise, base time step on mesh size
-            elif self.options["dt_division"] != 0:
-                dt =  0.25*h**2 / (U*(nu + h*U))/int(sqrt(2)**self.options["dt_division"])
-                n  = int(T / dt + 1.0)
-                dt = T / n
-                print 'Computing time step according to stability criteria and time step refinements'
-
-            # Otherwise, base time step on mesh size
-            else:
-#                dt =  0.25*h**2 / (U*(nu + h*U))
-                dt =  0.2*(h / U)
-                n  = int(T / dt + 1.0)
-                dt = T / n
-                print 'Computing time step according to stability criteria'
+        dt = self.options['dt']
+        n = int(T/float(dt) +1)
 
         # Compute range
-        t_range = linspace(0,T,n+1)[1:] # FIXME: Comment out [1:] to run g2ref g2ref
+        t_range = linspace(0,T,n+1)[1:] 
 
         # Report time step
         print " "
@@ -125,7 +78,3 @@ class ProblemBase:
         print " "
 
         return dt, t_range[0], t_range
-
-    # FIXME: Remove this and merge with boundary_condition()
-    def pressure_bc(self, Q):
-        return Constant(0)

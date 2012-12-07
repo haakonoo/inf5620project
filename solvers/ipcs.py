@@ -52,15 +52,14 @@ class Solver(SolverBase):
         p1 = interpolate(p0, Q)
         nu = Constant(problem.nu)
         k  = Constant(dt)
+        problem.f.t = dt
         f  = problem.f
         n  = FacetNormal(mesh)
 
         # Tentative velocity step
-        U = 0.5*(u0 + u)
-        F1 = (1/k)*inner(v, u - u0)*dx + inner(v, grad(u)*u0)*dx \
-            + inner(epsilon(v), sigma(U, p0, nu))*dx \
-            + inner(v, p0*n)*ds - beta*nu*inner(grad(U).T*n, v)*ds \
-            - inner(v, f)*dx
+        F1 = inner(u,v)*dx + k*inner(grad(u)*u0,v)*dx \
+            + k*2*nu*inner(epsilon(u),grad(v))*dx - k*nu*inner(grad(u).T*n,v)*ds \
+            -k*inner(p0,div(v))*dx + k*inner(p0*v,n)*ds - inner(u0,v)*dx - k*inner(f,v)*dx
         a1 = lhs(F1)
         L1 = rhs(F1)
 
@@ -75,7 +74,7 @@ class Solver(SolverBase):
         # Assemble matrices
         A1 = assemble(a1)
         A2 = assemble(a2)
-        A3 = assemble(a3)
+        A3 = assemble(a3) 
 
         # Time loop
         self.start_timing()

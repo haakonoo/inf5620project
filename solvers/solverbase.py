@@ -72,23 +72,21 @@ class SolverBase:
         if self.options["compute_divergence"]:
             check_divergence(u, p.function_space())
 
-        # Update problem FIXME: Should this be called before problem.functional??
+        # Update problem
         problem.update_problem(t, u, p)
 
-        # Evaluate functional and error
-        m = problem.reference(t)
-        M = problem.functional(t, u, p)
-        if m is None:
+        # Error check
+        if problem.u_exact != None:
+            problem.u_exact.t = t
+            V = u.function_space()
+            error = Function(V)
+            error.vector()[:] = u.vector() - interpolate(problem.u_exact, V).vector()
+            e = norm(error)
+        else :
             e = None
-            print "M = %g (missing reference value)" % M
-        else:
-            e = abs(M - m)
-            print "M = %g (reference %g), error = %g (maximum %g)" % (M, m, e, max([e] + self._e))
 
         # Store values
         self._t.append(t)
-        self._M.append(M)
-        self._m.append(m)
         self._e.append(e)
 
         # Save solution
@@ -96,34 +94,34 @@ class SolverBase:
 
             # Save velocity and pressure
             frequency = self.options["save_frequency"]
-            refinement = self.options["refinement_level"]
+            N = self.options['N']
             if (self._timestep - 1) % frequency == 0:
                 # Create files for saving
                 if self._ufile is None:
-                    self._ufile = File("results/" + self.prefix(problem) +"refinement_level_"+ str(refinement) + "_u.pvd")
+                    self._ufile = File("results/" + self.prefix(problem) +"N_"+ str(N) + "_u.pvd")
                 if self._pfile is None:
-                    self._pfile = File("results/" + self.prefix(problem) +"refinement_level_"+ str(refinement) + "_p.pvd")
+                    self._pfile = File("results/" + self.prefix(problem) +"N_"+ str(N) + "_p.pvd")
                 self._ufile << u
                 self._pfile << p
 
         # Save solution at t = T
         if self.options["save_solution_at_t=T"]:
             if t >= problem.T:
-                refinement = self.options["refinement_level"]
+                N = self.options["N"]
                 # Create files for saving
                 if self._ufile is None:
-                    self._ufile = File("results/" + self.prefix(problem) +"refinement_level_"+ str(refinement) + "_at_end" + "_u.pvd")
+                    self._ufile = File("results/" + self.prefix(problem) +"_N_"+ str(N) + "_at_end" + "_u.pvd")
                 if self._pfile is None:
-                    self._pfile = File("results/" + self.prefix(problem) +"refinement_level_"+ str(refinement) + "_at_end" + "_p.pvd")
+                    self._pfile = File("results/" + self.prefix(problem) +"_N_"+ str(N) + "_at_end" + "_p.pvd")
                 self._ufile << u
                 self._pfile << p
 
         # Save vectors in xml format
         if self.options["save_xml"]:
-            file = File(self.prefix(problem) +"_refinement_level_"+ str(self.options["refinement_level"]) + "t=%1.2e"% t + "_u.xml" )
+            file = File(self.prefix(problem) +"_N_"+ str(self.options["N"]) + "t=%1.2e"% t + "_u.xml" )
             file << u.vector()
 
-            file = File(self.prefix(problem) +"_refinement_level_"+ str(self.options["refinement_level"]) + "t=%1.2e"% t + "_p.xml" )
+            file = File(self.prefix(problem) +"_N_"+ str(self.options["N"]) + "t=%1.2e"% t + "_p.xml" )
             file << p.vector()
 
         # Plot solution
@@ -151,23 +149,14 @@ class SolverBase:
         self._timestep += 1
         self._time = time()
 
-    def eval(self):
-        "Return last functional value and maximum error in functional value on [0, T]"
-
-        # Plot values
-        if self.options["plot_functional"]:
-            import pylab as p
-            p.plot(self._t, self._M)
-            p.xlabel('t')
-            p.ylabel('Functional')
-            p.grid(True)
-            p.show()
+    def meanerror(self):
+        "Return mean value of error from computation if given exact solution. else return None"
 
         # Return value
         if self._e[0] is None:
-            return self._M[-1], None
+            return None
         else:
-            return self._M[-1], max([0.0] + self._e)
+            return 1./len(self._e)*sum(self._e)
 
     def cputime(self):
         #"Return accumulated CPU time."
@@ -226,8 +215,8 @@ class SolverBase:
         print "Basis computed"
 
         # Compute new velocity and write to file
-        refinement = self.options["refinement_level"]
-        podfile = File("results/" + self.prefix(problem) +"_POD_order_"+ str(k) + "_refinement_level_"+ str(refinement) + "_u.pvd")
+        N = self.options["N"]
+        podfile = File("results/" + self.prefix(problem) +"_POD_order_"+ str(k) + "_N_"+ str(N) + "_u.pvd")
         for m in range(M):
             u_m = u_0.copy(True)
             for i in range(k):

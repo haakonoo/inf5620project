@@ -41,6 +41,12 @@ class SolverBase:
         # Store solution for POD computation
         self.us = []
 
+        # Store POD basis and coefficiants
+        self.A = []
+        self.ub = []
+
+
+
     def getMyMemoryUsage(self):
         mypid = getpid()
         mymemory = getoutput("ps -o rss %s" % mypid).split()[1]
@@ -136,7 +142,7 @@ class SolverBase:
             if (self._timestep - 1) % self.options["check_frequency"] == 0:
                 print 'Memory usage is:' , self.getMyMemoryUsage()
 
-        if self.options["compute_POD"] > 0:
+        if self.options["store_u"]:
             self.us.append(u.copy(True))
 
         # Print progress
@@ -150,7 +156,7 @@ class SolverBase:
         self._time = time()
 
     def meanerror(self):
-        "Return mean value of error from computation if given exact solution. else return None"
+        "Return mean value of error from computation if given exact solution. Else return None"
 
         # Return value
         if self._e[0] is None:
@@ -162,7 +168,7 @@ class SolverBase:
         #"Return accumulated CPU time."
         return self._cputime
 
-    def compute_POD(self,problem,k):
+    def compute_POD(self,k):
         us = self.us 
         V = us[0].function_space()
         M = len(us)
@@ -173,29 +179,35 @@ class SolverBase:
             u_0.vector()[:] += u.vector()
         u_0.vector()[:] = 1./M*u_0.vector()
 
-        # Compute varying velocity and store in us
+        # Compute varying velocity
+        um = []
         for u in us:
-            u.vector()[:] -= u_0.vector() 
+            um_i = u.copy(True)
+            um_i.vector()[:] -= u_0.vector()
+            um.append(um_i)
         print "Mean and varying velocity computed" 
 
         # Compute correlation matrix
         C = np.zeros([M,M])
         for n in range(M):
             for m in range(n+1):
-                C[n,m] = (1./M)*assemble(inner(us[n],us[m])*dx)
+                C[n,m] = (1./M)*assemble(inner(um[n],um[m])*dx)
                 C[m,n] = C[n,m]
-        print "Correlation matrix"
+        print "Correlation matrix computed"
 
         # Compute eigenvalues
         eigval, eigvec = np.linalg.eig(C)
+        
+        # Remove complex values due to roundoff errors
+        eigval = eigval.real
+        eigvec = eigvec.real
 
-        print eigval
         # Scale eigenvectors
-        A = []
+        A = self.A
         for i in range(M):
-            eigval[i] = eigval[i].real
             if eigval[i] > 10e-16:
-                A.append(sqrt(eigval[i]*M)*eigvec[:,i].real)
+                print eigval[i]
+                A.append(np.sqrt(eigval[i]*M)*eigvec[:,i])
             else : 
                 break;
 
@@ -205,26 +217,55 @@ class SolverBase:
         print "Eigenvalues/vectors computed and scaled"
         
         # Basis velocity
-        ub = []
+        ub = self.ub
         for i in range(k):
             phi_i = Function(V)
             for m in range(M):
-                phi_i.vector()[:] += A[i][m]*us[m].vector()
+                phi_i.vector()[:] += A[i][m]*um[m].vector()
             phi_i.vector()[:] = 1./(M*eigval[i])*phi_i.vector()
             ub.append(phi_i)
         print "Basis computed"
 
-        # Compute new velocity and write to file
+        return u_0, k
+
+    def write_POD_vecocity_to_file(self,k):
+        u0, k = self.compute_POD(k)
         N = self.options["N"]
         podfile = File("results/" + self.prefix(problem) +"_POD_order_"+ str(k) + "_N_"+ str(N) + "_u.pvd")
         for m in range(M):
             u_m = u_0.copy(True)
             for i in range(k):
-                u_m.vector()[:] += A[i][m]*ub[i].vector()
+                u_m.vector()[:] += self.A[i][m]*self.ub[i].vector()
 
             podfile << u_m
         print "POD written to file"
 
+    def POD_error_analysis(self):
+        us = self.us
+        M = len(us)
+
+        u0, k= self.compute_POD(M)
+        E = []
+        
+        um = [u0.copy(True) for i in range(M)]
+
+        for i in range(k):
+            for m in range(M):
+                um[m].vector()[:] += self.A[i][m]*self.ub[i].vector()
+            E.append(compute_mean_norm(us,um))
+        
+        return E
+
+def compute_mean_norm(u,v):
+    V = u[0].function_space()
+    M = len(u)
+    mean_norm = 0
+    for i in range(M):
+        e = Function(V)
+        e.vector()[:] = u[i].vector() - v[i].vector()
+        mean_norm += norm(e)
+    
+    return mean_norm/float(M)
 
 def epsilon(u):
     "Return symmetric gradient."

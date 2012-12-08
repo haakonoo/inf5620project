@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 
 
-n = 6
+n = 7
 N = [2**i for i in range(1,n+1)]
 dt = [2**(-i) for i in range(1,n+1)]
 

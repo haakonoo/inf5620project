@@ -1,5 +1,5 @@
 from problembase import *
-from numpy import array
+from numpy import array, sqrt
 
 
 # Inflow boundary
@@ -40,7 +40,7 @@ class Problem(ProblemBase):
 
         # Make channel mesh
         # Divide N by two since the number of triangles will be of order 2*N
-        N = int(options["N"]/2)
+        N = int(options["N"]/2.)
         self.mesh = Rectangle(0,-self.R,self.L,self.R,int(N*self.L),int(N*2*self.R))
 
         # Mark bondary

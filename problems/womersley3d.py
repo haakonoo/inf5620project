@@ -3,10 +3,7 @@ __date__ = "2008-04-03"
 __copyright__ = "Copyright (C) 2008-2010 " + __author__
 __license__  = "GNU GPL version 3 or any later version"
 
-# Modified by Anders Logg, 2008-2010.
-# Modified by Kristian Valen-Sendstad, 2008-2010.
-# Modified by Harish Narayanan, 2009.
-# Modified by Mikael Mortensen, 2009.
+# Modified by Håkon Østerbø, 2012
 
 from problembase import *
 from numpy import array
@@ -19,7 +16,7 @@ class Problem(ProblemBase):
     def __init__(self, options):
         ProblemBase.__init__(self, options)
 
-        meshpath = "mesh/cylinder_4k.xml.gz";
+        meshpath = "mesh/cylinder_%dk.xml.gz" % options["N"];
         self.mesh = Mesh(meshpath)
 
         # Create right-hand side function with pressure gradient as body force

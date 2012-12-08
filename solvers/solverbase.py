@@ -3,6 +3,8 @@ __date__ = "2008-04-03"
 __copyright__ = "Copyright (C) 2008-2010 " + __author__
 __license__  = "GNU GPL version 3 or any later version"
 
+# Modified by Håkon Østerbø, 2012
+
 from dolfin import *
 
 import numpy as np
@@ -206,7 +208,6 @@ class SolverBase:
         A = self.A
         for i in range(M):
             if eigval[i] > 10e-16:
-                print eigval[i]
                 A.append(np.sqrt(eigval[i]*M)*eigvec[:,i])
             else : 
                 break;
@@ -228,8 +229,9 @@ class SolverBase:
 
         return u_0, k
 
-    def write_POD_vecocity_to_file(self,k):
-        u0, k = self.compute_POD(k)
+    def write_POD_velocity_to_file(self,problem, k):
+        u_0, k = self.compute_POD(k)
+        M = len(self.us)
         N = self.options["N"]
         podfile = File("results/" + self.prefix(problem) +"_POD_order_"+ str(k) + "_N_"+ str(N) + "_u.pvd")
         for m in range(M):
@@ -275,31 +277,3 @@ def sigma(u, p, nu):
     "Return stress tensor."
     return 2*nu*epsilon(u) - p*Identity(u.cell().d)
 
-def is_periodic(bcs):
-    "Check if boundary conditions are periodic."
-    return all(isinstance(bc, PeriodicBC) for bc in bcs)
-
-def has_converged(r, iter, method, maxiter=default_maxiter, tolerance=default_tolerance):
-    "Check if solution has converged."
-    print "Residual = ", r
-    if r < tolerance:
-        print "%s iteration converged in %d iteration(s)." % (method, iter + 1)
-        return True
-    elif iter == maxiter - 1:
-        raise RuntimeError, "%s iteration did not converge." % method
-    return False
-
-def check_divergence(u, Q):
-    "Check divergence of velocity."
-
-    # Compute L2 norm of divergence
-    print "||div u||_L2 =", norm(u, "Hdiv0")
-
-    # Compute projection of div u into Q_0
-    pdivu = project(div(u), Q)
-    zero = Constant(Q.mesh(), 0.0)
-    bc = DirichletBC(Q, zero, DomainBoundary())
-    bc.apply(pdivu.vector())
-
-    # Compute "weak" L2 norm of divergence
-    print "||div u||_w  =", sqrt(abs(assemble(pdivu*div(u)*dx, mesh=Q.mesh())))

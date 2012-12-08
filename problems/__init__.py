@@ -4,7 +4,7 @@ __copyright__ = "Copyright (C) 2010 " + __author__
 __license__  = "GNU GPL version 3 or any later version"
 
 # List of problems
-problems = ["channel", "aneurysm", "aneurysm2", "aneurysm3","womersley"]
+problems = ["womersley2d", "womersley3d", "test2d"]
 
 # Wrapper problem classes
 def Problem(name, options):

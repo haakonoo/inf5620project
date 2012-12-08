@@ -4,6 +4,7 @@ __copyright__ = "Copyright (C) 2008-2010 " + __author__
 __license__  = "GNU GPL version 3 or any later version"
 
 # Modified by Anders Logg, 2008-2010.
+# Modified by Håkon Østerbø, 2012
 
 from solverbase import *
 
@@ -14,11 +15,6 @@ class Solver(SolverBase):
         SolverBase.__init__(self, options)
 
     def solve(self, problem):
-
-        if str(problem)=="Aneurysm":
-            pc = "jacobi"
-        else:
-            pc = "ilu"
 
         # Get problem parameters
         mesh = problem.mesh
@@ -58,10 +54,8 @@ class Solver(SolverBase):
 
         # Tentative velocity step
         F1 = inner(u,v)*dx + k*inner(grad(u)*u0,v)*dx \
-            + k*2*nu*inner(epsilon(u),grad(v))*dx\
-            - k*nu*inner(grad(u).T*n,v)*ds \
-            -k*p0*div(v)*dx + k*inner(p0*v,n)*ds \
-            - inner(u0,v)*dx - k*inner(f,v)*dx
+            + k*2*nu*inner(epsilon(u),grad(v))*dx - k*nu*inner(grad(u).T*n,v)*ds \
+            -k*inner(p0,div(v))*dx + k*inner(p0*v,n)*ds - inner(u0,v)*dx - k*inner(f,v)*dx
         a1 = lhs(F1)
         L1 = rhs(F1)
 

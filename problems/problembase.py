@@ -1,3 +1,4 @@
+# coding: latin1
 __author__ = "Anders Logg <logg@simula.no>"
 __date__ = "2008-03-19"
 __copyright__ = "Copyright (C) 2008-2010 " + __author__

@@ -1,6 +1,9 @@
 inf5620project
 ==============
 
+I have based my project on the code in nsbench found on 'http://launchpad.net/nsbench/'
+with many modifications.
+
 To run program use ./ns
 Specify what kind of parameters you want by comandline arguments.
 Example:

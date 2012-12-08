@@ -1,3 +1,4 @@
+# coding: latin1
 __author__ = "Kristian Valen-Sendstad <kvs@simula.no>"
 __date__ = "2008-02-01"
 __copyright__ = "Copyright (C) 2008-2010 " + __author__
@@ -28,12 +29,6 @@ class Solver(SolverBase):
         # Get initial and boundary conditions
         u0, p0 = problem.initial_conditions(V, Q)
         bcu, bcp = problem.boundary_conditions(V, Q, t)
-
-        # Remove boundary stress term is problem is periodic
-        if is_periodic(bcp):
-            beta = Constant(0)
-        else:
-            beta = Constant(1)
 
         # Test and trial functions
         v = TestFunction(V)
@@ -86,18 +81,13 @@ class Solver(SolverBase):
 
             # Pressure correction
             b = assemble(L2)
-            if len(bcp) == 0 or is_periodic(bcp): normalize(b)
             [bc.apply(A2, b) for bc in bcp]
-            if is_periodic(bcp):
-                solve(A2, p1.vector(), b)
-            else:
-                solve(A2, p1.vector(), b, 'gmres', 'hypre_amg')
-            if len(bcp) == 0 or is_periodic(bcp): normalize(p1.vector())
+            solve(A2, p1.vector(), b, 'gmres', 'hypre_amg')
 
             # Velocity correction
             b = assemble(L3)
             [bc.apply(A3, b) for bc in bcu]
-            solve(A3, u1.vector(), b, "gmres", pc)
+            solve(A3, u1.vector(), b, "gmres", "ilu")
 
             # Update
             self.update(problem, t, u1, p1)

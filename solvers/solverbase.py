@@ -1,3 +1,4 @@
+# coding: latin1
 __author__ = "Anders Logg <logg@simula.no>"
 __date__ = "2008-04-03"
 __copyright__ = "Copyright (C) 2008-2010 " + __author__
@@ -131,18 +132,6 @@ class SolverBase:
 
             file = File(self.prefix(problem) +"_N_"+ str(self.options["N"]) + "t=%1.2e"% t + "_p.xml" )
             file << p.vector()
-
-        # Plot solution
-        if self.options["plot_solution"]:
-
-            # Plot velocity and pressure
-            plot(u, title="Velocity", rescale=True)
-            plot(p, title="Pressure", rescale=True)
-
-        # Check memory usage
-        if self.options["check_mem_usage"]:
-            if (self._timestep - 1) % self.options["check_frequency"] == 0:
-                print 'Memory usage is:' , self.getMyMemoryUsage()
 
         if self.options["store_u"]:
             self.us.append(u.copy(True))

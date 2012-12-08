@@ -115,27 +115,27 @@ The discretization in time is done with Backwards Euler
 \be\pdrt{u}(t_{n+1}) \approx \frac{u^{n+1} - u^n}{\Delta t}.\ee
 The Navier-Stokes equation is then
 \begin{align}
-    u^{n+1}  + \Delta t u^{n+1} \cdot \nabla u^{n+1} &= -\frac{\Delta t}{\rho} \nabla p^{n+1} + \Delta t 2\nu \nabla \cdot \epsilon(u^{n+1}) + f^{n+1}
+    u^{n+1}  + \Delta t u^{n+1} \cdot \nabla u^{n+1} &= -\Delta t \nabla p^{n+1} + \Delta t 2\nu \nabla \cdot \epsilon(u^{n+1}) + f^{n+1}
     \\ \nabla \cdot u^{n+1} &= 0
 \end{align}
 The non-linearity $u^{n+1} \cdot \nabla u^{n+1}$ can be dealt with in several ways, but here we will linearize the term by 
 $u^n \cdot \nabla u^{n+1}$. The equation then becomes
-\be\label{nonlinns} u^{n+1}  + \Delta t u^{n} \cdot \nabla u^{n+1} = -\frac{\Delta t}{\rho} \nabla p^{n+1} + \Delta t 2\nu \nabla \cdot \epsilon(u^{n+1}) + f^{n+1}\ee
+\be\label{nonlinns} u^{n+1}  + \Delta t u^{n} \cdot \nabla u^{n+1} = -\Delta t \nabla p^{n+1} + \Delta t 2\nu \nabla \cdot \epsilon(u^{n+1}) + f^{n+1}\ee
 The tentative velocity is calculated by evaluating $\nabla p$ as the previous computed value, 
 and neglecting the incompressibility condition. 
 It will be denoted by $u^*$ 
-\be\label{nonlinnst} u^*  + \Delta t u^n \cdot \nabla u^* = -\frac{\Delta t}{\rho} \nabla p^n + \Delta t 2\nu \nabla \cdot \epsilon(u^*)+f^{n+1}.\ee
+\be\label{nonlinnst} u^*  + \Delta t u^n \cdot \nabla u^* = -\Delta t \nabla p^n + \Delta t 2\nu \nabla \cdot \epsilon(u^*)+f^{n+1}.\ee
 This is linear and solvable. Let $u^s = u^{n+1} - u^*$. Then subtracting equation (\ref{nonlinnst}) from (\ref{nonlinns}) we get
 \begin{align}
-    u^s + q(u^s) &= -\frac{\Delta t}{\rho}\nabla \phi \label{useq1}
+    u^s + q(u^s) &= -\Delta t\nabla \phi \label{useq1}
    \\ \nabla \cdot u^s &= - \nabla \cdot u^* \label{useq2}
 \end{align}
 where $q(u^s) = \Delta t (u^n \cdot \nabla u^s - 2\nu \nabla \epsilon(u^s))$ and $\phi = p^{n+1} - p^n$. Neglegting the $q$ term from the equation
 and multiplying (\ref{useq1}) with $\nabla$ and using (\ref{useq2})
-\be\label{phieq} \frac{\Delta t}{\rho}\Delta \phi = \nabla \cdot u^* \ee
+\be\label{phieq} \Delta t\Delta \phi = \nabla \cdot u^* \ee
 one gets a poisson problem for $\phi$. After solving this mixed system one can update the new velocity and pressure explisitly
 \begin{align}
-    u^{n+1} &= u^* - \frac{\Delta t}{\rho} \nabla \phi \label{updateu}\\
+    u^{n+1} &= u^* - \Delta t \nabla \phi \label{updateu}\\
     p^{n+1} &= \phi - p^n.\label{updatep}
 \end{align}
 
@@ -149,10 +149,10 @@ We use the notation
     (u,v)_{\partial \Omega} &= \intpom u\cdot v\ds\mbox{ for vectors $u$, $v$}\\
 \end{align}
 The equation for the tentative velocity is
-\be\label{tent} u^*  + \Delta t u^n \cdot \nabla u^* = -\frac{\Delta t}{\rho} \nabla p^n + \Delta t 2\nu \nabla \cdot \epsilon(u^*) + u^n + f^{n+1}.\ee
+\be\label{tent} u^*  + \Delta t u^n \cdot \nabla u^* = -\Delta t \nabla p^n + \Delta t 2\nu \nabla \cdot \epsilon(u^*) + u^n + f^{n+1}.\ee
 Multiplying with a testfunction $v$ and integrating over the domain $\Omega$ gives
 \be \lt{u^*}{v} + \Delta t \lt{u^n\cdot \nabla u^*}{v} - \Delta t 2\nu \lt{\nabla \cdot \epsilon(u^*)}{v}= 
--\frac{\Delta t}{\rho}\lt{\nabla p^n}{v} + \lt{u^n}{v} + \lt{f^{n+1}}{v}. \ee
+-\Delta t\lt{\nabla p^n}{v} + \lt{u^n}{v} + \lt{f^{n+1}}{v}. \ee
 Let $a_1(u^*,v)$ be the right hand side and $L_1(v)$ be the left hand side.
 Doing an integration by parts gives
 \begin{align}
@@ -167,12 +167,12 @@ Using this and (\ref{epsipb}), $a_1(u^*,v)$ becomes
 \be a_1(u^*,v) = \lt{u^*}{v} + \Delta t \lt{u^n\cdot \nabla u^*}{v} + \Delta t 2 \nu \lt{\epsilon(u^*)}{\nabla v} - \Delta t \nu \ltp{(\nabla u^*)^T n}{v}\ee 
 For $L_1$ we get
 \begin{align} 
-    L_1(v) &= -\frac{\Delta t}{\rho}\lt{\nabla p^n}{v} + \lt{u^n}{v} + \lt{f^{n+1}}{v}\\
-           &= \frac{\Delta t}{\rho}(\lt{p^n}{\nabla \cdot v} - \ltp{p^n v}{n}) + \lt{u^n}{v}+ \lt{f^{n+1}}{v}
+    L_1(v) &= -\Delta t\lt{\nabla p^n}{v} + \lt{u^n}{v} + \lt{f^{n+1}}{v}\\
+           &= \Delta t(\lt{p^n}{\nabla \cdot v} - \ltp{p^n v}{n}) + \lt{u^n}{v}+ \lt{f^{n+1}}{v}
 \end{align}
 
 Multiplying the pressure equation with a test function $q$ and integrating gives
-\be \lt{\Delta \phi}{q} =\frac{\rho}{\Delta t} \lt{\nabla \cdot u^*}{q} \ee
+\be \lt{\Delta \phi}{q} =\frac{1}{\Delta t} \lt{\nabla \cdot u^*}{q} \ee
 Integration by parts of the Laplace term gives
 \begin{align}
     \lt{\Delta \phi}{q} &= -\lt{\nabla \phi}{\nabla q} + \ltp{\nabla \phi}{qn}\\
